@@ -60,7 +60,7 @@ class RunCommand():
         self.logger("Initializing", "Finished")
         
     def logger(self,section,msg):
-        self.f.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,") + section + "," + msg)
+        self.f.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,") + section + "," + msg + "\n")
         
     def run(self):
         self.logger("Running", "Started")
