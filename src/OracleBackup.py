@@ -39,7 +39,7 @@ class RunCommand():
         self.removecmd += ".dmp " + self.backupsdir + self.fileprefix + "_expdp.log"
         
         # Rsync command.
-        self.rsynccmd = "rsync -avz --no-o --no-g --no-p --no-t /home/oracle/Backups/ /mnt/panzer/`date +%Y-%m`"
+        self.rsynccmd = "rsync -avz --no-o --no-g --no-p --no-t " + self.backupsdir + " /mnt/panzer/`date +%Y-%m`"
         
         self.status = {}
         self.status['expdpcmd'] = -1
@@ -64,17 +64,27 @@ class RunCommand():
         
     def run(self):
         self.logger("Running", "Started")
+        self.logger("expdpcmd", "Started")
         self.status['expdpcmd'] = os.system(self.expdpcmd)
+        self.logger("expdpcmd", "Finished")
+        self.logger("movecmd", "Started")
         self.status['movecmd'] = os.system(self.movecmd)
+        self.logger("movecmd", "Finished")
+        self.logger("compresscmd", "Started")
         self.status['compresscmd'] = os.system(self.compresscmd)
+        self.logger("compresscmd", "Finished")
+        self.logger("removecmd", "Started")
         self.status['removecmd'] = os.system(self.removecmd)
+        self.logger("removecmd", "Finished")
         self.logger("Running", "Finished")
             
     def rsyncFiles(self):
         # mount -t cifs //panzer.opentext.net/ogre -o username=ogre,password=Oracle12$
         # rsync -avz --no-o --no-g --no-p --no-t /home/oracle/Backups/ /mnt/panzer/`date +%Y-%m`
-        self.logger("Synchronizing", "Started")        
+        self.logger("Synchronizing", "Started")
+        self.logger("rsynccmd", "Started")
         self.status['rsynccmd'] = os.system(self.rsynccmd)
+        self.logger("rsynccmd", "Finished")
         self.logger("Synchronizing", "Finished")
 
     def removeOldBackups(self):
@@ -86,6 +96,7 @@ class RunCommand():
             fileage = currenttime - filetime
             if fileage > 604800:
                 os.unlink(self.backupsdir + file)
+                self.logger("BackupCleanup", "Removing" + str(self.backupsdir + file))
                 self.status['removeOldBackups'].append(str(self.backupsdir + file))
         self.logger("BackupCleanup", "Finished")  
 
