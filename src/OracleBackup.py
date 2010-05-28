@@ -42,7 +42,7 @@ class RunCommand():
         self.removecmd += ".dmp " + self.backupsdir + self.fileprefix + "_expdp.log"
         
         # Rsync command.
-        self.rsynccmd = "rsync -avz --no-o --no-g --no-p --no-t " + self.backupsdir + " /mnt/panzer/`date +%Y-%m`"
+        self.rsynccmd = "rsync -avz --no-o --no-g --no-p --no-t " + self.backupsdir + " /mnt/panzer/Oracle/ogre.support.opentext.net/ogre/DataPumpBackups/`date +%Y-%m`"
         
         self.status = {}
         self.status['expdpcmd'] = -1
@@ -86,7 +86,7 @@ class RunCommand():
         self.logger("Running", "Finished", str(self.status))
             
     def rsyncFiles(self):
-        # mount -t cifs //panzer.opentext.net/ogre -o username=ogre,password=Oracle12$
+        # mount -t cifs //panzer.opentext.net/Backups /mnt/panzer -o username=backups,password=Pa\$\$w0rd
         # rsync -avz --no-o --no-g --no-p --no-t /home/oracle/Backups/ /mnt/panzer/`date +%Y-%m`
         self.logger("Synchronizing", "Started")
         self.logger("rsynccmd", "Started", str(self.rsynccmd))
