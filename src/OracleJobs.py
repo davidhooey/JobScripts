@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import smtplib
+import subprocess
 
 class OracleJobs():
         
@@ -29,6 +30,19 @@ class OracleJobs():
         
     def whoami(self):
         return sys._getframe(1).f_code.co_name    
+
+    def runcmd(self, cmd):
+        try:
+            retcode = subprocess.call(cmd, shell=True)
+            return retcode
+            #if retcode < 0:
+            #    return "Terminated by signal " + str(retcode)
+            #elif retcode > 0:
+            #    return "Failed with return code " + str(retcode)
+            #else:
+            #    return retcode
+        except OSError as e:
+            return "Failed: " + str(e)                    
 
     def oracleDataPumpExport(self, dpdumpdir, localbackupdir, remotebackupdir, fileprefix):
         # Inputs
@@ -80,19 +94,19 @@ class OracleJobs():
                 
         # Run the commands only if the previous commands were successful.
         self.logger(self.whoami() + "_expdpcmd", "Started", str(expdpcmd))
-        self.status[self.whoami() + '_expdpcmd'] = os.system(expdpcmd)
+        self.status[self.whoami() + '_expdpcmd'] = self.runcmd(expdpcmd)
         self.logger(self.whoami() + "_expdpcmd", "Finished", str(self.status[self.whoami() + '_expdpcmd']))
         if self.status[self.whoami() + '_expdpcmd'] == 0:
             self.logger(self.whoami() + "_movecmd", "Started", str(movecmd))
-            self.status[self.whoami() + '_movecmd'] = os.system(movecmd)
+            self.status[self.whoami() + '_movecmd'] = self.runcmd(movecmd)
             self.logger(self.whoami() + "_movecmd", "Finished", str(self.status[self.whoami() + '_movecmd']))
             if self.status[self.whoami() + '_movecmd'] == 0:
                 self.logger(self.whoami() + "_compresscmd", "Started", str(compresscmd))
-                self.status[self.whoami() + '_compresscmd'] = os.system(compresscmd)
+                self.status[self.whoami() + '_compresscmd'] = self.runcmd(compresscmd)
                 self.logger(self.whoami() + "_compresscmd", "Finished", str(self.status[self.whoami() + '_compresscmd']))
                 if self.status[self.whoami() + '_compresscmd'] == 0:
                     self.logger(self.whoami() + "_removecmd", "Started", str(removecmd))
-                    self.status[self.whoami() + '_removecmd'] = os.system(removecmd)
+                    self.status[self.whoami() + '_removecmd'] = self.runcmd(removecmd)
                     self.logger(self.whoami() + "_removecmd", "Finished", str(self.status[self.whoami() + '_removecmd']))
                     
         # Synchronize the backup remotely.
@@ -104,7 +118,7 @@ class OracleJobs():
         cpcmd = "cp " + localbackupdir + fileprefix + "* " + remotebackupdir + "`date +%Y-%m`"                
         
         self.logger(self.whoami() + "_cpcmd", "Started", str(cpcmd))
-        self.status[self.whoami() + '_cpcmd'] = os.system(cpcmd)
+        self.status[self.whoami() + '_cpcmd'] = self.runcmd(cpcmd)
         self.logger(self.whoami() + "_cpcmd", "Finished", str(self.status[self.whoami() + '_cpcmd']))
 
         # Remove local backup files which are over 7 days old only if the synchronization job ran.
@@ -150,15 +164,16 @@ class OracleJobs():
         
         # Hot Oracle Backup
         self.logger(self.whoami() + "_rmancmd", "Started", str(rmancmd))
-        self.status[self.whoami() + '_rmancmd'] = os.system(rmancmd)
+        self.status[self.whoami() + '_rmancmd'] = self.runcmd(rmancmd)
         self.logger(self.whoami() + "_rmancmd", "Finished", str(self.status[self.whoami() + '_rmancmd']))        
         
         # Rsync flash_recovery_area.
-        #rsync -av --delete /opt/oracle/flash_recovery_area/ORCL/ mnt/panzer/Oracle/ovmm.support.opentext.net/orcl/HotBackups
-        rsyncrman = "rsync -avz --no-o --no-g --no-p --no-t --delete " + flashrecoverydir + " " + remotebackupdir 
+        #rsyncrman = "rsync -avz --delete /opt/oracle/flash_recovery_area/ORCL/ mnt/panzer/Oracle/ovmm.support.opentext.net/orcl/HotBackups"
+        logfile = self.scriptdir + "rsync_" + self.timestr + ".log"
+        rsyncrman = "rsync -av --delete " + flashrecoverydir + " " + remotebackupdir + "  >> " + logfile 
         
         self.logger(self.whoami() + "_rsyncrman", "Started", str(rsyncrman))
-        self.status[self.whoami() + '_rsyncrman'] = os.system(rsyncrman)
+        self.status[self.whoami() + '_rsyncrman'] = self.runcmd(rsyncrman)
         self.logger(self.whoami() + "_rsyncrman", "Finished", str(self.status[self.whoami() + '_rsyncrman']))                
         
         self.logger("oracleHotBackup", "Finished", str(self.status))         

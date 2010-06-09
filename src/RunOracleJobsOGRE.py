@@ -4,7 +4,7 @@ oj = OracleJobs.OracleJobs()
 
 dpdumpdir = "/opt/oracle/admin/ogre/dpdump/"
 localbackupdir = "/home/oracle/Backups/"
-remotebackupdir = "/mnt/panzer/Oracle/ogre.support.opentext.net/ogre/DataPumpBackups/"
+remotebackupdir = "/mnt/extdrive/backups/oracle/ogre.support.opentext.net/ogre/datapumpbackups/"
 fileprefix = "ogre_ogre_full_expdp_"
 
 oj.oracleDataPumpExport(dpdumpdir, localbackupdir, remotebackupdir, fileprefix)

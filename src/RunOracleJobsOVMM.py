@@ -4,13 +4,13 @@ oj = OracleJobs.OracleJobs()
 
 dpdumpdir = "/opt/oracle/admin/orcl/dpdump/"
 localbackupdir = "/home/oracle/Backups/"
-remotebackupdir = "/mnt/panzer/Oracle/ovmm.support.opentext.net/orcl/DataPumpBackups/"
+remotebackupdir = "/mnt/extdrive/backups/oracle/ovmm.support.opentext.net/orcl/datapumpbackups/"
 fileprefix = "ovmm_orcl_full_expdp_"
 
 oj.oracleDataPumpExport(dpdumpdir, localbackupdir, remotebackupdir, fileprefix)
 
 flashrecoverydir = "/opt/oracle/flash_recovery_area/ORCL/"
-remotebackupdir = "/mnt/panzer/Oracle/ovmm.support.opentext.net/orcl/HotBackups"
+remotebackupdir = "/mnt/extdrive/backups/oracle/ovmm.support.opentext.net/orcl/hotbackups"
 
 oj.oracleHotBackup(flashrecoverydir, remotebackupdir)
 

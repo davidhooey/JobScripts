@@ -1,21 +1,32 @@
 =========================
 ovmm.support.opentext.net
 =========================
-Oracle:
-Daily at 4:00 AM
-0 4 * * * /usr/local/bin/python3 /home/oracle/Scripts/RunOracleJobsOVMM.py
 
-Host:
-Weekly on Saturday at 8:00 PM
-0 20 * * 6 /usr/local/bin/python3 /root/Scripts/RunLinuxJobsOVMM.py
+Oracle: 
+    Schedule:
+        Daily at 04:00
+    Cron:
+        0 4 * * * /usr/local/bin/python3 /home/oracle/Scripts/RunOracleJobsOVMM.py
+
+Host: 
+    Schedule:
+        Daily at 20:00
+    Cron:
+        0 20 * * * /usr/local/bin/python3 /root/Scripts/RunLinuxJobsOVMM.py
+
 
 =========================
 ogre.support.opentext.net
 =========================
-Oracle:
-Daily at 5:00 AM
-0 5 * * * /usr/local/bin/python3 /home/oracle/Scripts/RunOracleJobsOGRE.py
 
-Host:
-Weekly on Sunday at 8:00 PM
-0 20 * * 7 /usr/local/bin/python3 /root/Scripts/RunLinuxJobsOGRE.py
+Oracle: 
+    Schedule:
+        Daily at 05:00
+    Cron:
+        0 5 * * * /usr/local/bin/python3 /home/oracle/Scripts/RunOracleJobsOGRE.py
+
+Host: 
+    Schedule:
+        Daily at 23:00
+    Cron:
+        0 23 * * * /usr/local/bin/python3 /root/Scripts/RunLinuxJobsOGRE.py
