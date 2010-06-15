@@ -80,8 +80,10 @@ class LinuxJobs():
         self.logger(self.whoami() + "_cp0-1", "Finished", str(self.status[self.whoami() + '_cp0-1']))
         
         # rsync to backup.0
+        # Excluding: /dev/* /mnt/* /proc/* /sys/* /tmp/* *lost+found 
+        # Including: /dev/console /dev/initctl /dev/null /dev/zero
         logfile = self.scriptdir + "rsync_" + self.timestr + ".log" 
-        rsynccmd = "rsync -av --delete --exclude=/mnt /  " + remotebackupdir + "/backup.0 >> " + logfile 
+        rsynccmd = "rsync -av --delete --include=/dev/console --include=/dev/initctl --include=/dev/null --include=/dev/zero --exclude=/dev/* --exclude=/mnt/* --exclude=/proc/* --exclude=/sys/* --exclude=/tmp/* --exclude=*lost+found /  " + remotebackupdir + "/backup.0 >> " + logfile 
         self.logger(self.whoami() + "_rsync", "Started", rsynccmd)
         self.status[self.whoami() + '_rsync'] = self.runcmd(rsynccmd)
         self.logger(self.whoami() + "_rsync", "Finished", str(self.status[self.whoami() + '_rsync']))
