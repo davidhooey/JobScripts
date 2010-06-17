@@ -20,8 +20,8 @@ class LinuxJobs():
         self.now = datetime.datetime.now() 
         self.timestr = self.now.strftime("%Y-%m-%d_%Hh%Mm%Ss")
                                         
-        # Create a status dictionary.
-        self.status = {}
+        # Create a status lsit.
+        self.status = []
               
         self.logger("Initializing", "Finished")
         
@@ -47,7 +47,27 @@ class LinuxJobs():
 
     def linuxBackup(self, remotebackupdir, backupstokeep):
         self.logger(self.whoami(), "Started")
+        self.status.append(self.whoami() + ": Started")
 
+        self.snapshotManager(remotebackupdir, backupstokeep)
+        
+        # rsync to backup.0
+        # Excluding: /dev/* /mnt/* /proc/* /sys/* /tmp/* *lost+found 
+        # Including: /dev/console /dev/initctl /dev/null /dev/zero
+        logfile = self.scriptdir + "rsync_" + self.timestr + ".log" 
+        rsynccmd = "rsync -av --delete --include=/dev/console --include=/dev/initctl --include=/dev/null --include=/dev/zero --exclude=/dev/* --exclude=/mnt/* --exclude=/proc/* --exclude=/sys/* --exclude=/tmp/* --exclude=*lost+found /  " + remotebackupdir + "/backup.0 >> " + logfile 
+        self.logger(self.whoami() + "_rsync", "Started", rsynccmd)
+        status = self.runcmd(rsynccmd)
+        self.logger(self.whoami() + "_rsync", "Finished", str(status))
+        self.status.append([self.whoami() + "_rsync", status])        
+        
+        self.logger(self.whoami(), "Finished")
+        self.status.append(self.whoami() + ": Finished")
+        
+    def snapshotManager(self, remotebackupdir, backupstokeep):
+        self.logger(self.whoami(), "Started", remotebackupdir + "(" + str(backupstokeep) + ")")
+        self.status.append(self.whoami() + ": Started")
+        
         # How to perform snapshots using hard links. Hard links are not support through CIFS mounts to Windows.
         # 1. rm -rf /mnt/panzer/Linux/ovmm.support.opentext.net/backup.3
         # 2. mv /mnt/panzer/Linux/ovmm.support.opentext.net/backup.2 /mnt/panzer/Linux/ovmm.support.opentext.net/backup.3
@@ -61,34 +81,29 @@ class LinuxJobs():
         # Remove backup.[backupstokeep]
         rmcmd = "rm -Rf " + remotebackupdir + "/backup." + str(backupstokeep)
         self.logger(self.whoami() + "_rm" + str(backupstokeep), "Started", rmcmd)
-        self.status[self.whoami() + '_rm' + str(backupstokeep)] = self.runcmd(rmcmd)
-        self.logger(self.whoami() + "_rm" + str(backupstokeep), "Finished", str(self.status[self.whoami() + '_rm' + str(backupstokeep)]))        
+        status = self.runcmd(rmcmd)
+        self.logger(self.whoami() + "_rm" + str(backupstokeep), "Finished", str(status))
+        self.status.append([self.whoami() + "_rm", status])        
                 
         # mv backup.[i-1] tp backup.[i].
         i = backupstokeep
         while i != 1:
             mvcmd = "mv " + remotebackupdir + "/backup." + str(i-1) + " " + remotebackupdir + "/backup." + str(i) 
             self.logger(self.whoami() + "_mv" + str(i-1) + "-" + str(i), "Started", mvcmd)
-            self.status[self.whoami() + '_mv' + str(i-1) + "-" + str(i)] = self.runcmd(mvcmd)
-            self.logger(self.whoami() + "_mv" + str(i-1) + "-" + str(i), "Finished", str(self.status[self.whoami() + '_mv' + str(i-1) + "-" + str(i)]))        
+            status = self.runcmd(mvcmd)
+            self.logger(self.whoami() + "_mv" + str(i-1) + "-" + str(i), "Finished", str(status))
+            self.status.append([self.whoami() + "_mv" + str(i-1) + "-" + str(i), status])        
             i -= 1
                 
         # cp -al backup.0 to backup.1
         cpcmd = "cp -al " + remotebackupdir + "/backup.0 " + remotebackupdir + "/backup.1"
         self.logger(self.whoami() + "_cp0-1", "Started", cpcmd)
-        self.status[self.whoami() + '_cp0-1'] = self.runcmd(cpcmd)
-        self.logger(self.whoami() + "_cp0-1", "Finished", str(self.status[self.whoami() + '_cp0-1']))
+        status = self.runcmd(cpcmd)
+        self.logger(self.whoami() + "_cp0-1", "Finished", str(status))
+        self.status.append([self.whoami() + "_cp0-1", status])
         
-        # rsync to backup.0
-        # Excluding: /dev/* /mnt/* /proc/* /sys/* /tmp/* *lost+found 
-        # Including: /dev/console /dev/initctl /dev/null /dev/zero
-        logfile = self.scriptdir + "rsync_" + self.timestr + ".log" 
-        rsynccmd = "rsync -av --delete --include=/dev/console --include=/dev/initctl --include=/dev/null --include=/dev/zero --exclude=/dev/* --exclude=/mnt/* --exclude=/proc/* --exclude=/sys/* --exclude=/tmp/* --exclude=*lost+found /  " + remotebackupdir + "/backup.0 >> " + logfile 
-        self.logger(self.whoami() + "_rsync", "Started", rsynccmd)
-        self.status[self.whoami() + '_rsync'] = self.runcmd(rsynccmd)
-        self.logger(self.whoami() + "_rsync", "Finished", str(self.status[self.whoami() + '_rsync']))
-        
-        self.logger(self.whoami(), "Finished", str(self.status))
+        self.logger(self.whoami(), "Finished")
+        self.status.append(self.whoami() + ": Finished")       
             
     def sendStatusEmail(self, smtpserver, sender, receivers, subject, title):
         # Inputs
@@ -108,18 +123,18 @@ class LinuxJobs():
         emailheader += "To: " + sender + "<" + sender + ">\n"
         emailheader += "Subject: " + subject + "\n\n"        
         
-        message = emailheader + title + ": " + self.timestr + "\n"
+        message = emailheader + title + ": " + self.timestr + "\n\n"
         
-        message += "\nResults:\n"
-        
-        for s in sorted(self.status):
-            message += "\t" + s + ": "
-            if self.status[s] == 0:
-                message += "Success\n"
-            elif self.status[s] == -1:
-                message += "NOP\n"
+        for s in self.status:
+            if s.__class__ == [].__class__:
+                if s[1] == 0:
+                    message += s[0] + ": Success\n"
+                elif s[1] == -1:
+                    message += s[0] + ": NOP\n"
+                else:
+                    message += s[0] + ": Failed\n"
             else:
-                message += "Failed\n"
+                message += s + "\n"
                 
         try:
             smtpObj = smtplib.SMTP(smtpserver)
@@ -127,4 +142,4 @@ class LinuxJobs():
         except SMTPException:
             self.logger(self.whoami(), "Finished", "Failed to send email!")
         else:
-            self.logger(self.whoami(), "Finished", str(self.status))
+            self.logger(self.whoami(), "Finished")
